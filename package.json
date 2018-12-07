@@ -1,0 +1,63 @@
+{
+  "name": "@jib/jib",
+  "version": "0.0.1",
+  "description": "CLI for generating @jib/cli projects",
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "npm run build -- -w",
+    "docs": "rm -rf ./docs && typedoc --options ./typedoc.js --exclude '**/*+(spec|templates|node_modules)/**' --out ./docs ./src",
+    "lint": "tslint -p ./src",
+    "test": "nyc jasmine --config=src/spec/support/jasmine.json",
+    "posttest": "nyc check-coverage --lines 90 --functions 70 --branches 60",
+    "test:report": "nyc report --reporter=json && codecov -f reports/coverage/*.json",
+    "prebuild": "rm -rf build",
+    "prepack": "npm run build"
+  },
+  "author": "Matt Vander Vliet",
+  "homepage": "https://github.com/jibcli/jib",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jibcli/jib"
+  },
+  "keywords": [
+    "cli",
+    "typescript",
+    "command",
+    "generator"
+  ],
+  "license": "MIT",
+  "bin": {
+    "jib": "bin/jib"
+  },
+  "jib": {
+    "name": "jib",
+    "commandDir": "build/commands"
+  },
+  "files": [
+    "bin",
+    "build",
+    "!build/spec",
+    "templates"
+  ],
+  "preferGlobal": true,
+  "dependencies": {
+    "@jib/cli": "^0.1.0",
+    "@jib/codegen": "^0.1.0"
+  },
+  "devDependencies": {
+    "@jib/tslint": "^0.0.1",
+    "@types/jasmine": "^2.8.12",
+    "@types/node": "^10.12.12",
+    "codecov": "^3.1.0",
+    "jasmine": "^3.3.1",
+    "jasmine-spec-reporter": "^4.2.1",
+    "nyc": "^12.0.2",
+    "ts-node": "^7.0.1",
+    "tslint": "^5.11.0",
+    "typedoc": "^0.12.0",
+    "typescript": "^3.2.1",
+    "yeoman-test": "^1.9.1"
+  }
+}
