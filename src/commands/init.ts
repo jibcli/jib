@@ -23,6 +23,7 @@ const [PROJECT_GENERATOR] = ['project'];
 })
 export class InitCmd extends BaseCommand {
 
+  // include jib/codegen
   @Plugin(GeneratorEnv, __dirname)
   private _gen: GeneratorEnv;
 
@@ -41,10 +42,10 @@ export class InitCmd extends BaseCommand {
     ]));
   }
 
-  public async run(options: IInitOpts, bin?: string) {
+  public async run(options: IInitOpts, ...args: string[]) {
     this.logger.debug(`Init with options`, options);
 
     return this._gen.loadAll()
-      .run(PROJECT_GENERATOR, options as any, bin);
+      .run(PROJECT_GENERATOR, options as any, ...args);
   }
 }

@@ -27,8 +27,8 @@ export class AddCommand extends BaseCommand {
     ]));
   }
 
-  public async run(options: IAddCommandOptions, name?: string, dest?: string) {
+  public async run(options: IAddCommandOptions, ...args: string[]) {
     return this._gen.load(COMMAND_GENERATOR)
-      .run(COMMAND_GENERATOR, options, name, dest);
+      .run(COMMAND_GENERATOR, options, ...args);
   }
 }
