@@ -1,0 +1,14 @@
+#! /usr/bin/env node
+
+const { CLI, Log } = require('@jib/cli');
+
+const parser = new CLI({
+  commandDir: 'build/commands',
+});
+
+parser
+  .addGlobalOption({
+    flag: '-d, --debug',
+    description: 'enable debug logging',
+  }, () => Log.Logger.setDefaultLevel(Log.LOG_LEVEL.DEBUG))
+  .parse(process.argv);

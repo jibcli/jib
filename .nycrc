@@ -1,0 +1,26 @@
+{
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "src/spec",
+    "build",
+    "reports",
+    "templates",
+    "docs"
+  ],
+  "extension": [
+    ".ts"
+  ],
+  "require": [
+    "ts-node/register"
+  ],
+  "reporter": [
+    "lcov",
+    "text"
+  ],
+  "all": false,
+  "sourceMap": true,
+  "instrument": true,
+  "report-dir": "reports/coverage"
+}

@@ -1,0 +1,19 @@
+{
+  "name": "<%- name %>",
+  "description": "",
+  "version": "0.0.1",
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "npm run build -- -w",<% if (options.tests) { %>
+    "test": "nyc jasmine --config=src/spec/support/jasmine.json",<% } %>
+    "lint": "tslint -p ."
+  },
+  "bin": {
+    "<%- bin %>": "bin/<%- bin %>"
+  },
+  "jib": {<% if (options.single) { %>
+    "rootCommand": "<%- rootCommand %>",<% } %>
+    "commandDir": "build/commands",
+    "commandDelim": " "
+  }
+}
