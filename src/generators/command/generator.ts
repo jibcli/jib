@@ -18,8 +18,8 @@ export class CommandGenerator extends JibGen<ICommandGeneratorOptions> {
 
   constructor(...args: any[]) {
     super(...args);
-    this.argument('command', { required: false })
-      .argument('dir', { required: false });
+    this.argument('command', { required: false, type: String, default: '' })
+      .argument('dir', { required: false, type: String, default: '' });
   }
 
   public initializing() {
