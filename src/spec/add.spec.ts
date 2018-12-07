@@ -13,7 +13,7 @@ describe('Add', () => {
       const add = new AddCommand();
       const gen = spyOn(add['_gen'] as any, 'run').and.returnValue(Promise.resolve());
       add.run({}, 'foo').then(() => {
-        expect(gen).toHaveBeenCalledWith('command', jasmine.any(Object), 'foo', undefined);
+        expect(gen).toHaveBeenCalledWith('command', jasmine.any(Object), 'foo');
       }).then(done).catch(done.fail);
     });
   });

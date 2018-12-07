@@ -1,6 +1,7 @@
 import { InitCmd } from '../commands/init';
 
 describe('Init command', () => {
+
   it('should show help', () => {
     const init = new InitCmd();
     const help = spyOn(init.ui, 'write').and.returnValue(init.ui);
@@ -15,7 +16,8 @@ describe('Init command', () => {
       single: true,
       tests: true,
     }).then(() => {
-      expect(gen).toHaveBeenCalledWith('project', jasmine.objectContaining({tests: true}), undefined);
+      expect(gen).toHaveBeenCalledWith('project', jasmine.objectContaining({tests: true}));
     }).then(done).catch(done.fail);
   });
+
 });
