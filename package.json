@@ -8,7 +8,7 @@
     "build": "tsc",
     "build:watch": "npm run build -- -w",
     "docs": "rm -rf ./docs && typedoc --options ./typedoc.js --exclude '**/*+(spec|templates|node_modules)/**' --out ./docs ./src",
-    "lint": "tslint -p ./src",
+    "lint": "tslint -p .",
     "test": "nyc jasmine --config=src/spec/support/jasmine.json",
     "posttest": "nyc check-coverage --lines 90 --functions 70 --branches 60",
     "test:report": "nyc report --reporter=json && codecov -f reports/coverage/*.json",
