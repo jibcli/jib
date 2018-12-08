@@ -27,8 +27,7 @@ describe('Command generator', () => {
     spyOn(JibGen.prototype as any, '_isJib').and.returnValue(true);
     mockGen()
       .withOptions(<ICommandGeneratorOptions>{
-        command: 'bar',
-        dir: 'foo',
+        command: ['foo', 'bar'],
       }).then((out: string) => {
         const cmd = path.join(CONST.COMMAND_SRCDIR, 'foo', 'bar.ts');
         helper.assertGeneratedFiles(out, [

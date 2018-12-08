@@ -44,8 +44,7 @@ export class ProjectGenerator extends JibGen<IProjectGeneratorOptions> {
     // add command generator
     const { single } = this.options;
     this.composeWith('command', <ICommandGeneratorOptions>{
-      command: single && CONST.COMMAND_ROOT,
-      dir: null,
+      command: single && [CONST.COMMAND_ROOT],
     });
   }
 
