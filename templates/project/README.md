@@ -1,4 +1,4 @@
-# <%- name %> Command Line
+# <%- className + (options.bin ? ' Command Line' : ' Plugin') %>
 
 ## About
 
@@ -7,7 +7,9 @@ command line generator.
 
 ## Usage
 
-```shell
-npm install -g
-<%- bin %> --help
-```
+```shell<% if (options.bin) { %>
+npm install -g <%- name %>
+<%- options.bin %> --help
+<% } else { %>
+npm install --save <%- name %>
+<% } %>```

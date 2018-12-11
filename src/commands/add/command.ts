@@ -1,11 +1,10 @@
 import { Command, BaseCommand, Plugin } from '@jib/cli';
 import { GeneratorEnv } from '@jib/codegen';
+import { CONST } from '../../lib/constants';
 
 export interface IAddCommandOptions {
 
 }
-
-const [COMMAND_GENERATOR] = ['command'];
 
 @Command({
   description: 'Add commands to an existing project',
@@ -27,7 +26,8 @@ export class AddCommand extends BaseCommand {
   }
 
   public async run(options: IAddCommandOptions, args: string[] = []) {
-    return this._gen.load(COMMAND_GENERATOR)
-      .run(COMMAND_GENERATOR, options, ...args);
+    const { GEN_COMMAND } = CONST;
+    return this._gen.load(GEN_COMMAND)
+      .run(GEN_COMMAND, options, ...args);
   }
 }

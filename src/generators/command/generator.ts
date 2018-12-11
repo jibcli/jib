@@ -47,6 +47,7 @@ export class CommandGenerator extends JibGen<ICommandGeneratorOptions> {
   public writing(): void {
     // finalize the command option
     const { command } = this.options;
+    const { COMMAND_DIR, PROJECT_SRC} = CONST;
     const syntax = []
       .concat(command)
       .map((p: string) => this._filterStr(p, REG.FILTER_COMMAND).toLowerCase())
@@ -56,7 +57,7 @@ export class CommandGenerator extends JibGen<ICommandGeneratorOptions> {
     // capture dest
     const orig = this.destinationRoot();
     // determine output
-    const tree = [CONST.COMMAND_SRCDIR, ...syntax];
+    const tree = [PROJECT_SRC, COMMAND_DIR, ...syntax];
     this.destinationRoot(this.destinationPath(...tree));
     // write
     this._writeTemplates('', {

@@ -1,13 +1,13 @@
 import { Command, BaseCommand, Plugin } from '@jib/cli';
 import { GeneratorEnv, IGeneratorUsage } from '@jib/codegen';
+import { CONST } from '../lib/constants';
+import { IProjectGeneratorOptions, PROJECT_TYPE } from '../generators/project/generator';
 
 export interface IInitOpts {
   single?: boolean;
   tests?: boolean;
   install?: boolean;
 }
-
-const [PROJECT_GENERATOR] = ['project'];
 
 @Command({
   allowUnknown: true,
@@ -42,10 +42,11 @@ export class InitCmd extends BaseCommand {
     ]));
   }
 
-  public async run(options: IInitOpts, ...args: string[]) {
-    this.logger.debug(`Init with options`, options);
+  public async run(options: IInitOpts, bin?: string, ...args: string[]) {
+    const { GEN_PROJECT } = CONST;
 
-    return this._gen.loadAll()
-      .run(PROJECT_GENERATOR, options as any, ...args);
+    return this._gen
+      .loadAll()
+      .run(GEN_PROJECT, <IProjectGeneratorOptions>{ bin, ...options, type: PROJECT_TYPE.BIN } as any, ...args);
   }
 }

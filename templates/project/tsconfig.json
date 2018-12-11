@@ -1,13 +1,13 @@
 {
   "compilerOptions": {
-    "rootDir": "src",
-    "outDir": "build",
+    "rootDir": "<%- CONST.PROJECT_SRC %>",
+    "outDir": "<%- CONST.PROJECT_BUILD %>",
     "target": "es2015",
     "module": "commonjs",
     "lib": ["es2015", "es2017"],
     "moduleResolution": "node",
     "sourceMap": false,
-    "declaration": false,
+    "declaration": <%- (emitDeclaration ? 'true' : 'false') %>,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "removeComments": false,
@@ -19,7 +19,7 @@
     ]
   },
   "exclude": [
-    "build",
+    "<%- CONST.PROJECT_BUILD %>",
     "node_modules"
   ]
 }

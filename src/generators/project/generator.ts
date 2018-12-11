@@ -6,17 +6,33 @@ import { JibGen, IJibGenOptions } from '../base';
 import { STRINGS, CONST } from '../../lib/constants';
 import { IInitOpts } from '../../commands/init';
 import { ICommandGeneratorOptions } from '../command/generator';
+import { classCase } from '../../lib/strings';
+import { IProjectConfig, Workspace, JIB, VERSION } from '@jib/cli';
 
 export interface IProjectGeneratorOptions extends IJibGenOptions, IInitOpts {
-  bin?: string; // project bin name
+  type?: PROJECT_TYPE;
   name?: string; // project package name
   mkdir?: boolean;
+  bin?: string; // project bin name
+}
+
+interface IProjectTemplateVars {
+  name: string;
+  className: string;
+  emitDeclaration: boolean;
+  options: IProjectGeneratorOptions;
+  CONST: any;
 }
 
 const REG = {
-  FILTER_PKG: /[^\@\w\s\/-]/g,
+  FILTER_PKG: /[^\@\w\/-]/g,
   FILTER_BIN: /[^\w\/-]/g,
 };
+
+export enum PROJECT_TYPE {
+  BIN = 'bin',
+  PLUGIN = 'plugin',
+}
 
 export class ProjectGenerator extends JibGen<IProjectGeneratorOptions> {
 
@@ -25,7 +41,9 @@ export class ProjectGenerator extends JibGen<IProjectGeneratorOptions> {
   constructor(...args: any[]) {
     super(...args);
 
-    this.argument('bin', { required: false });
+    this
+      .option('bin', { type: String })
+      .option('type', { type: String, default: PROJECT_TYPE.BIN });
 
     const { bin, install } = this.options;
 
@@ -35,6 +53,7 @@ export class ProjectGenerator extends JibGen<IProjectGeneratorOptions> {
       skipInstall: !install,
       bin: bin === 'undefined' ? undefined : bin,
     };
+
   }
 
   /**
@@ -42,10 +61,12 @@ export class ProjectGenerator extends JibGen<IProjectGeneratorOptions> {
    */
   public default() {
     // add command generator
-    const { single } = this.options;
-    this.composeWith('command', <ICommandGeneratorOptions>{
-      command: single && [CONST.COMMAND_ROOT],
-    });
+    const { single, type } = this.options;
+    if (type === PROJECT_TYPE.BIN) {
+      this.composeWith('command', <ICommandGeneratorOptions>{
+        command: single && [CONST.COMMAND_ROOT],
+      });
+    }
   }
 
   /**
@@ -59,7 +80,7 @@ export class ProjectGenerator extends JibGen<IProjectGeneratorOptions> {
    * prompt as necessary
    */
   public prompting(): Promise<any> {
-    const { bin } = this.options;
+    const { bin, type } = this.options;
     const { name } = this.existingPkg;
     // prepare prompts
     const q: Yeoman.Questions = [
@@ -94,7 +115,7 @@ export class ProjectGenerator extends JibGen<IProjectGeneratorOptions> {
         name: 'bin',
         message: STRINGS.PMT_BIN_NAME,
         default: ((a: any): string => this._filterStr(a.name ? a.name : name, REG.FILTER_BIN)),
-        when: !bin,
+        when: type === PROJECT_TYPE.BIN && !bin,
         filter: (n: string) => this._filterStr(n, REG.FILTER_BIN),
         validate: (n: string) => !!n || STRINGS.ERR_BIN_REQUIRED,
       },
@@ -109,36 +130,62 @@ export class ProjectGenerator extends JibGen<IProjectGeneratorOptions> {
    * write files to memfs
    */
   public writing(): void {
-    const { bin, name, mkdir } = this.options;
+    const { name, mkdir, type, ...rest } = this.options;
     if (mkdir) {
       this.log(`Creating directory ${this.ui.color.bold(name)}`);
       const dir = this.destinationPath(name);
       if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir);
         this.dirname = name;
         this.destinationRoot(dir);
       } else {
         this._error(`Path ${name} already exists`);
       }
     }
-    const vars: any = {
-      ...this.options,
-      options: this.options,
-      rootCommand: CONST.COMMAND_ROOT,
+    // establish template vars
+    const vars: IProjectTemplateVars = {
+      name,
+      className: classCase(name),
+      emitDeclaration: type !== PROJECT_TYPE.BIN,
+      options: rest,
+      CONST,
     };
-    this._writeTemplates('', vars, true);
+    // write main project
+    this._writeTemplates('', vars, false);
+    // write specific project files
+    switch (type) {
+      case PROJECT_TYPE.PLUGIN:
+        return this.__writePlugin(vars);
+      case PROJECT_TYPE.BIN:
+      default:
+        return this.__writeBin(vars);
+    }
   }
 
   /**
    * perform package installation
    */
   public install(): any {
-    const { install } = this.options;
+    const { install, type } = this.options;
     if (install) {
-      this.npmInstall(CONST.CORE_DEPS);
-      this.npmInstall(CONST.CORE_DEVDEPS, {'save-dev': true});
-      return this._npm(['link']);
+      const saveDev = {'save-dev': true};
+      this.npmInstall(CONST.CORE_DEVDEPS, saveDev);
+      switch (type) {
+        case PROJECT_TYPE.PLUGIN:
+          this.npmInstall(CONST.CORE_DEPS, saveDev); // @jib/cli as devDep
+          break;
+        case PROJECT_TYPE.BIN:
+        default:
+          this.npmInstall(CONST.CORE_DEPS);
+          return this._npm(['link']); // link binary
+      }
+    } else {
+      this.log(`${this.ui.color.yellow('WARN:')} skip install`);
     }
+  }
+
+  public end(): void {
+    // all done
+    this.log(`Done ${this.ui.color.green(CONST.SYMBOL_SUCCESS)}`);
   }
 
   /**
@@ -153,6 +200,51 @@ export class ProjectGenerator extends JibGen<IProjectGeneratorOptions> {
       return !excludes;
     }
     return true;
+  }
+
+  /**
+   * write templates for bin project
+   */
+  private __writeBin(vars?: IProjectTemplateVars): void {
+    const { bin, single } = this.options;
+    const { COMMAND_ROOT, COMMAND_DIR, PROJECT_BUILD } = CONST;
+    this._writeTemplates('bin', { bin }, true);
+    this.fs.extendJSON(this.destinationPath('package.json'), <any>{
+      preferGlobal: true,
+      bin: {
+        [bin]: `bin/${bin}`,
+      },
+      [JIB]: <IProjectConfig>{
+        // TODO: preserve existing
+        commandDir: path.join(PROJECT_BUILD, COMMAND_DIR),
+        commandDelim: ' ',
+        ...(single ? { rootCommand: COMMAND_ROOT } : {}),
+      },
+    });
+  }
+
+  /**
+   * write templates for plugin project
+   */
+  private __writePlugin(vars: IProjectTemplateVars): void {
+    this.log('HERE WE GO!');
+    const { PROJECT_SRC, PROJECT_BUILD } = CONST;
+    // reconfigure src/dest
+    const [tmpl, dest] = [this.sourceRoot(), this.destinationRoot()];
+    this.sourceRoot(Workspace.resolveDir(tmpl, 'plugin'));
+    this.destinationRoot(this.destinationPath(PROJECT_SRC));
+    // write
+    this.fs.extendJSON(this.destinationPath('..', 'package.json'), {
+      main: `${PROJECT_BUILD}/index.js`,
+      types: `${PROJECT_BUILD}/index.d.ts`,
+      peerDependencies: {
+        '@jib/cli': `^${VERSION}`,
+      },
+    });
+    this._writeTemplates('', vars, true);
+    // restore
+    this.sourceRoot(tmpl);
+    this.destinationRoot(dest);
   }
 
 }
