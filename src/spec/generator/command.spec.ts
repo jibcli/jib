@@ -14,6 +14,8 @@ const mockGen = (): any => Tester.run(CommandGenerator, {
 
 describe('Command generator', () => {
 
+  const { PROJECT_SRC, COMMAND_DIR } = CONST;
+
   it('should err without jib project', done => {
     const err = spyOn(JibGen.prototype as any, '_error');
     spyOn(CommandGenerator.prototype, 'writing');
@@ -23,16 +25,15 @@ describe('Command generator', () => {
       }).then(done).catch(done.fail);
   });
 
-  it(`should write to ${CONST.COMMAND_SRCDIR}`, done => {
+  it(`should write to ${COMMAND_DIR}`, done => {
     spyOn(JibGen.prototype as any, '_isJib').and.returnValue(true);
     mockGen()
       .withOptions(<ICommandGeneratorOptions>{
-        command: 'bar',
-        dir: 'foo',
+        command: ['foo', 'bar'],
       }).then((out: string) => {
-        const cmd = path.join(CONST.COMMAND_SRCDIR, 'foo', 'bar.ts');
+        const cmd = path.join(PROJECT_SRC, COMMAND_DIR, 'foo', 'bar.ts');
         helper.assertGeneratedFiles(out, [
-          CONST.COMMAND_SRCDIR,
+          path.join(PROJECT_SRC, COMMAND_DIR),
           cmd,
         ]);
         helper.assertValidTS(path.join(out, cmd));

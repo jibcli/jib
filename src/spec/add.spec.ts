@@ -1,6 +1,7 @@
 import { AddCommand } from '../commands/add/command';
 
 describe('Add', () => {
+
   describe('Command', () => {
     it('should show help', () => {
       const add = new AddCommand();
@@ -12,9 +13,10 @@ describe('Add', () => {
     it('should delegate to generator', done => {
       const add = new AddCommand();
       const gen = spyOn(add['_gen'] as any, 'run').and.returnValue(Promise.resolve());
-      add.run({}, 'foo').then(() => {
+      add.run({}, ['foo']).then(() => {
         expect(gen).toHaveBeenCalledWith('command', jasmine.any(Object), 'foo');
       }).then(done).catch(done.fail);
     });
   });
+
 });

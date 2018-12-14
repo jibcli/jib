@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import { GeneratorEnv } from '@jib/codegen';
-import { ProjectGenerator, IProjectGeneratorOptions } from '../../generators/project/generator';
+import { ProjectGenerator, IProjectGeneratorOptions, PROJECT_TYPE } from '../../generators/project/generator';
 import * as helper from './helper';
 import { JibGen } from '../../generators/base';
 
@@ -18,26 +18,6 @@ describe('Project generator', () => {
   it('should resolve in env', () => {
     const env = GeneratorEnv.relativeTo(__dirname);
     expect(env.list('project')).toContain('project');
-  });
-
-  it('should support external options', done => {
-    const opts: IProjectGeneratorOptions = {
-      name: 'foo', // not defined as an option or argument
-      bin: 'bar', // is defined as argument
-    };
-    mockGen()
-    .withOptions(opts)
-    .withPrompts({ mkdir: true })
-    .then((output: string) => {
-      helper.assertPackageJson(output);
-      helper.assertGeneratedFiles(output, [
-        'bin/bar',
-        'bin/bar.cmd',
-        '.gitignore',
-        'README.md',
-        'tsconfig.json',
-      ]);
-    }).then(done).catch(done.fail);
   });
 
   it('should make a directory by name', done => {
@@ -81,6 +61,67 @@ describe('Project generator', () => {
         expect(install).toHaveBeenCalledTimes(2); // dep and devDep
         expect(link).toHaveBeenCalledWith(['link']);
       }).then(done).catch(done.fail);
+  });
+
+  describe('Creating a new bin', () => {
+
+    it('should generate source for bin command', done => {
+      const opts: IProjectGeneratorOptions = {
+        name: 'foo', // not defined as an option or argument
+        bin: 'bar', // is defined as argument
+      };
+      mockGen()
+        .withOptions(opts)
+        .withPrompts({ mkdir: true })
+        .then((output: string) => {
+          helper.assertPackageJson(output);
+          helper.assertGeneratedFiles(output, [
+            'bin/bar',
+            'bin/bar.cmd',
+            '.gitignore',
+            'README.md',
+            'tsconfig.json',
+          ]);
+        }).then(done).catch(done.fail);
+    });
+
+    it('should support single command', done => {
+      mockGen()
+        .withOptions(<IProjectGeneratorOptions>{
+          single: true,
+        }).then((output: string) => {
+          const p = helper.assertPackageJson(output);
+          expect(p.jib.rootCommand).toBeDefined();
+        }).then(done).catch(done.fail);
+    });
+
+  });
+
+  describe('Creating a new plugin', () => {
+
+    it('should create proper source with dependencies', done => {
+      const install = spyOn(JibGen.prototype, 'npmInstall');
+      const opts: IProjectGeneratorOptions = {
+        type: PROJECT_TYPE.PLUGIN,
+        install: true,
+        dependencies: ['inquirer'],
+      };
+      mockGen()
+      .withOptions(opts)
+      .withPrompts({ name: '@jib/foo' })
+      .then((output: string) => {
+        helper.assertPackageJson(output);
+        helper.assertGeneratedFiles(output, [
+          'src/index.ts',
+          'src/plugin.ts',
+          '.gitignore',
+          'README.md',
+          'tsconfig.json',
+        ]);
+        helper.assertValidTS(path.join(output, 'src', 'plugin.ts'));
+      }).then(done).catch(done.fail);
+    });
+
   });
 
 });

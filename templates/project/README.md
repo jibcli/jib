@@ -1,4 +1,4 @@
-# <%- name %> Command Line
+# <%- className + (options.bin ? ' Command Line' : ' Plugin') %>
 
 ## About
 
@@ -7,7 +7,29 @@ command line generator.
 
 ## Usage
 
-```shell
-npm install -g
-<%- bin %> --help
-```
+```shell<% if (isBinType) { %>
+npm install -g <%- name %>
+<%- options.bin %> --help
+<% } else { %>
+npm install --save <%- name %>
+<% } %>```
+
+<% if (isPluginType) { %>
+
+Using within `@jib/cli` commands:
+
+```typescript
+import { Command, Plugin } from '@jib/cli';
+import { <%- className %> } from '<%- name %>';
+
+@Command({/* */})
+class MyCustomCommand {
+  // inject plugin
+  @Plugin(<%- className %>)
+  public helper: <%- className %>;
+
+  public async run(options: any, ...args: string[]) {
+    // this.helper...
+  }
+}
+```<% } %>
