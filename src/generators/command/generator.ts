@@ -5,12 +5,12 @@ import { STRINGS, CONST } from '../../lib/constants';
 import { classCase } from '../../lib/strings';
 
 export interface ICommandGeneratorOptions extends IJibGenOptions {
-  command?: string;
-  dir?: string;
+  command?: string[];
 }
 
 const REG = {
   FILTER_COMMAND: /[^a-z-]/ig,
+  SPLIT_COMMAND: /\W+/,
 };
 
 export class CommandGenerator extends JibGen<ICommandGeneratorOptions> {
@@ -18,8 +18,7 @@ export class CommandGenerator extends JibGen<ICommandGeneratorOptions> {
 
   constructor(...args: any[]) {
     super(...args);
-    this.argument('command', { required: false, type: String, default: '' })
-      .argument('dir', { required: false, type: String, default: '' });
+    this.argument('command', { required: false, type: Array, default: [] });
   }
 
   public initializing() {
@@ -35,7 +34,7 @@ export class CommandGenerator extends JibGen<ICommandGeneratorOptions> {
         type: 'input',
         name: 'command',
         message: STRINGS.PMT_COMMAND_NAME,
-        when: !command,
+        when: !(command && command.length),
         filter: (n: string) => this._filterStr(n, REG.FILTER_COMMAND),
         validate: (n: string) => !!n || STRINGS.ERR_COMMAND_REQUIRED,
       },
@@ -46,16 +45,24 @@ export class CommandGenerator extends JibGen<ICommandGeneratorOptions> {
   }
 
   public writing(): void {
-    const { command, dir } = this.options;
+    // finalize the command option
+    const { command } = this.options;
+    const { COMMAND_DIR, PROJECT_SRC} = CONST;
+    const syntax = []
+      .concat(command)
+      .map((p: string) => this._filterStr(p, REG.FILTER_COMMAND).toLowerCase())
+      .reduce((p, v) => p.concat(v.split(REG.SPLIT_COMMAND)), [] as string[]);
+    const name = syntax.pop();
+
     // capture dest
     const orig = this.destinationRoot();
     // determine output
-    const tree = [CONST.COMMAND_SRCDIR, (dir || '').replace(CONST.COMMAND_SRCDIR, '')].filter(p => !!p);
+    const tree = [PROJECT_SRC, COMMAND_DIR, ...syntax];
     this.destinationRoot(this.destinationPath(...tree));
     // write
     this._writeTemplates('', {
-      name: this._filterStr(command, REG.FILTER_COMMAND).toLowerCase(),
-      className: classCase(command),
+      name,
+      className: classCase(name),
     });
     // restore destination
     this.destinationRoot(orig);

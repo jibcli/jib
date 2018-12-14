@@ -10,9 +10,15 @@ export const STRINGS = {
 };
 
 export const CONST = {
-  COMMAND_OUTDIR: 'build/commands',
-  COMMAND_SRCDIR: 'src/commands',
+  GEN_PROJECT: 'project',
+  GEN_COMMAND: 'command',
+  GEN_PLUGIN: 'plugin',
+  PROJECT_SRC: 'src',
+  PROJECT_BUILD: 'build',
+  COMMAND_DIR: 'commands',
   COMMAND_ROOT: 'root',
   CORE_DEPS: ['@jib/cli'],
-  CORE_DEVDEPS: ['@jib/tslint', '@types/node', 'typescript', 'tslint', 'ts-node'],
+  CORE_DEVDEPS: ['@jib/tslint', '@types/node', 'rimraf', 'typescript', 'tslint', 'ts-node'],
+  SYMBOL_SUCCESS: '✓',
+  SYMBOL_ERROR: '✗',
 };
