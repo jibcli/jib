@@ -14,6 +14,7 @@ export interface IProjectGeneratorOptions extends IJibGenOptions, IInitOpts {
   name?: string; // project package name
   mkdir?: boolean;
   bin?: string; // project bin name
+  dependencies?: string[];
 }
 
 interface IProjectTemplateVars {
@@ -43,7 +44,8 @@ export class ProjectGenerator extends JibGen<IProjectGeneratorOptions> {
 
     this
       .option('bin', { type: String })
-      .option('type', { type: String, default: PROJECT_TYPE.BIN });
+      .option('type', { type: String, default: PROJECT_TYPE.BIN })
+      .argument('dependencies', { type: Array, required: false, default: []});
 
     const { bin, install } = this.options;
 
@@ -132,13 +134,12 @@ export class ProjectGenerator extends JibGen<IProjectGeneratorOptions> {
   public writing(): void {
     const { name, mkdir, type, ...rest } = this.options;
     if (mkdir) {
-      this.log(`Creating directory ${this.ui.color.bold(name)}`);
       const dir = this.destinationPath(name);
       if (!fs.existsSync(dir)) {
         this.dirname = name;
         this.destinationRoot(dir);
       } else {
-        this._error(`Path ${name} already exists`);
+        this._error(`Cannot create directory: '${name}' already exists`);
       }
     }
     // establish template vars
@@ -148,6 +149,9 @@ export class ProjectGenerator extends JibGen<IProjectGeneratorOptions> {
       emitDeclaration: type !== PROJECT_TYPE.BIN,
       options: rest,
       CONST,
+      ...Object.keys(PROJECT_TYPE).reduce((obj, key) => ({
+        ...obj, [`is${classCase(key.toLowerCase())}Type`]: type === PROJECT_TYPE[key],
+      }), {} as any),
     };
     // write main project
     this._writeTemplates('', vars, false);
@@ -165,21 +169,33 @@ export class ProjectGenerator extends JibGen<IProjectGeneratorOptions> {
    * perform package installation
    */
   public install(): any {
-    const { install, type } = this.options;
+    const { install, type, dependencies } = this.options;
     if (install) {
       const saveDev = {'save-dev': true};
+      this.log('Installing dependencies');
       this.npmInstall(CONST.CORE_DEVDEPS, saveDev);
       switch (type) {
+        // plugin installation
         case PROJECT_TYPE.PLUGIN:
-          this.npmInstall(CONST.CORE_DEPS, saveDev); // @jib/cli as devDep
+          // @jib/cli as devDep
+          this.npmInstall(CONST.CORE_DEPS, saveDev);
+          if (dependencies.length) {
+            // install any explicit dependencies
+            this.npmInstall(dependencies);
+            dependencies.map(dep => `@types/${dep}`)
+              .forEach(dt => {
+                try { this.npmInstall(dt); } catch (e) { /* noop */ }
+              });
+          }
           break;
+        // new command install
         case PROJECT_TYPE.BIN:
         default:
           this.npmInstall(CONST.CORE_DEPS);
           return this._npm(['link']); // link binary
       }
     } else {
-      this.log(`${this.ui.color.yellow('WARN:')} skip install`);
+      this.log(`${this.ui.color.yellow('WARN:')} installation skipped`);
     }
   }
 
@@ -227,7 +243,7 @@ export class ProjectGenerator extends JibGen<IProjectGeneratorOptions> {
    * write templates for plugin project
    */
   private __writePlugin(vars: IProjectTemplateVars): void {
-    this.log('HERE WE GO!');
+    const { dependencies } = this.options;
     const { PROJECT_SRC, PROJECT_BUILD } = CONST;
     // reconfigure src/dest
     const [tmpl, dest] = [this.sourceRoot(), this.destinationRoot()];
@@ -237,11 +253,13 @@ export class ProjectGenerator extends JibGen<IProjectGeneratorOptions> {
     this.fs.extendJSON(this.destinationPath('..', 'package.json'), {
       main: `${PROJECT_BUILD}/index.js`,
       types: `${PROJECT_BUILD}/index.d.ts`,
+      description: `${dependencies.join(', ')} Plugin for @jib/cli`.trim(),
       peerDependencies: {
         '@jib/cli': `^${VERSION}`,
       },
     });
-    this._writeTemplates('', vars, true);
+    const deps: any[] = dependencies.map(pkg => ({pkg, name: classCase(pkg)}));
+    this._writeTemplates('', { deps, ...vars }, true);
     // restore
     this.sourceRoot(tmpl);
     this.destinationRoot(dest);

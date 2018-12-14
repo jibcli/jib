@@ -28,10 +28,11 @@ export class PluginCommand extends BaseCommand {
       [`$> jib init plugin ${sampleDep}`, this.ui.color.dim(`# Create a plugin with a dependency on ${sampleDep}`)],
     ]));
   }
+
   public async run(options: IPluginOptions, deps: string[] = []) {
     const { GEN_PROJECT } = CONST;
 
     return this._gen.load(GEN_PROJECT)
-      .run(GEN_PROJECT, <IProjectGeneratorOptions>{ ...options, type: PROJECT_TYPE.PLUGIN }, deps);
+      .run(GEN_PROJECT, <IProjectGeneratorOptions>{ ...options, type: PROJECT_TYPE.PLUGIN }, ...deps);
   }
 }

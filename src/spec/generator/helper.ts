@@ -10,8 +10,10 @@ export const assertGeneratedFiles = (outputDir: string, files: string[]): void =
     });
 };
 
-export const assertPackageJson = (outputDir: string): void => {
-  expect(() => require(path.join(outputDir, 'package.json'))).not.toThrow();
+export const assertPackageJson = (outputDir: string): any => {
+  const p = (): any => require(path.join(outputDir, 'package.json'));
+  expect(p).not.toThrow();
+  return p();
 };
 
 export const assertValidTS = (file: string, target: ts.ScriptTarget = ts.ScriptTarget.ES2015): void => {
