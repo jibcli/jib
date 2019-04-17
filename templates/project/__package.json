@@ -4,7 +4,7 @@
   "scripts": {
     "build": "tsc",
     "build:watch": "npm run build -- -w",
-    "test": "<%- options.tests ? 'nyc jasmine --config=src/spec/support/jasmine.json' : 'ts-node .' %>",
+    "test": "<%- options.tests ? 'nyc jasmine --config=src/spec/support/jasmine.json' : 'ts-node src' %>",
     "lint": "tslint -p .",
     "prebuild": "rimraf build",
     "prepack": "npm run build"

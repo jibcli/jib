@@ -10,8 +10,8 @@ import { Provide } from '@jib/cli';
   factory: () => <%- className %>.init(),
 })
 export class <%- className %> {
-  public static init(): this {
-    let instance = new this();
+  public static init(): <%- className %> {
+    const instance = new this();
     // use singleton, supply configurations, perform modifications or extensions, etc.
     return instance;
   }
