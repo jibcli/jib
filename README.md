@@ -39,6 +39,6 @@ jib add command --help
 
 - [x] Deep level command augmentation `jib add command [name] [path]`
 - [x] Automatically link the installed CLI `npm link`
-- [ ] Add plugin generator `jib plugin`
+- [x] Add plugin generator `jib plugin`
 - [ ] Include unit testing scaffolding
 - [ ] Allow choice of CI (currently wercker)
